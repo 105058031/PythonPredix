@@ -5,7 +5,7 @@
 <div>
 <div class="navigation" >
   <a href="{{url_for('newmainCategory')}}" > 
-  {% block title %}<h2 class="-font--sans" style="top: 50%;">{{item.name}}
+  {% block title %}<h2 class="-font--sans" style="top: 50%;">Items
   </h2> {% endblock %}
   </div>
   </div>
@@ -13,21 +13,23 @@
 
  
 {% block content %}
-
-<div class="floaty" style="width: 50vw; height: 30vh; border-radius: 2.5% 2.5% 2.5% 2.5%">
+{% for i in items %}
+<div class="floaty large" style="border-radius: 2.5% 2.5% 2.5% 2.5%">
 <div>
-<p class="-font--sans"><b>{{item.name}}<b></p>
-<p class="-font--sans"><b>Item Description:</b>  {{item.description}}</p>
-<p class="-font--sans"><b>Price:</b>  {{item.price}}</p>
+<p class="-font--sans"><b>{{i.name}}<b></p>
+<p class="-font--sans"><b>i Description:</b>  {{i.description}}</p>
+<p class="-font--sans"><b>Price:</b>  {{i.price}}</p>
+<p class="-font--sans"><b>Owner Cat:</b>  {{i.category_id}}</p>
 </div>
 
-<a href='{{url_for('editItem', itid = item.id) }}'>Edit</a>
+<a href='{{url_for('editItem', itid = i.id) }}'>Edit</a>
 
-<a href='{{url_for('deleteItem', itid = item.id) }}'>Delete</a>
+<a href='{{url_for('deleteItem', itid = i.id) }}'>Delete</a>
 
-<a href='{{url_for('mainCategories', mcid = item.catid) }}'>Back</a>
+<a href='{{url_for('subCategories', mcid = i.pid) }}'>Back</a>
 
 </div>
+{% endfor %}
 {% endblock %}
 <!--<p>{{i.id}}</p>-->
 

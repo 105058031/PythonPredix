@@ -24,7 +24,6 @@ DBSession = sessionmaker(bind=engine)
 # session.rollback()
 session = DBSession()
 
-
 Cat1=Categories(id="1",name="Main")
 session.add(Cat1)
 session.commit()
@@ -166,7 +165,7 @@ session.commit()
 Lin23=Lineage(id="23",parent_id="20",child_id="23")
 session.add(Lin23)
 session.commit()
-Item1=Items(id="1",name="Dodge LA 318",price="250 USD",category_id="5",description="Small Block ")
+Item1=Items(id="1",name="Dodge LA 318",price="250 USD",category_id="6",description="Small Block ")
 session.add(Item1)
 session.commit()
 Item2=Items(id="2",name="Dodge LA 340",price="400 USD",category_id="5",description="Small Block ")
@@ -271,6 +270,7 @@ session.commit()
 Item35=Items(id="35",name="Holley Classic 2300",price="1000 USD",category_id="22",description="1350 CFM")
 session.add(Item35)
 session.commit()
+
 
 
 

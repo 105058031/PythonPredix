@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, jsonify, url_for, flash
-from sqlalchemy import create_engine, asc
+from sqlalchemy import create_engine, asc, text, bindparam
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session
 from db_setup import Categories, Lineage, Items, Base
@@ -45,6 +45,14 @@ def mainCategories(mcid='1'):
 		
 	Cats_Disp = session.query(Categories).filter(Categories.id.in_((Main_Cats))).all() 
 	return render_template("mCategories.html", items = Cats_Disp)
+@app.route('/mcategory/<int:mcid>/s')
+def subCategories(mcid):
+	session = DBSession()
+	Main_Cats = session.query(Lineage).with_entities(Lineage.child_id).filter_by(parent_id = mcid).all()
+	Main_Cats = [r for r, in Main_Cats]
+		
+	Cats_Disp = session.query(Categories).filter(Categories.id.in_((Main_Cats))).all() 
+	return render_template("mCategories.html", items = Cats_Disp)
 @app.route('/mcategory/new')
 def newmainCategory():
 	session = DBSession()
@@ -58,45 +66,19 @@ def editmainCategory(mcid):
 def deletemainCategory(mcid):
 	session = DBSession()
 	return render_template("deleteCategory.html", mcid = mcid)   
-@app.route('/mcategory/<int:mcid>/scategory')
-@app.route('/mcategory/<int:mcid>/')
-def subCategories(mcid):
+
+@app.route('/mcategory/<int:mcid>/items')
+@app.route('/mcategory/<int:mcid>/i')
+def mainItems(mcid):
 	session = DBSession()
-	return 'Here are sub category in main category # %(mcid)s' % locals()  
-@app.route('/mcategory/<int:mcid>/scategory/new')
-def newsubCategory(mcid):
-	session = DBSession()
-	return 'This is for creating a new sub category in main category # %(mcid)s' % locals()
-@app.route('/mcategory/<int:mcid>/scategory/<int:scid>/edit')
-def editsubCategory(mcid,scid):
-	session = DBSession()
-	return 'This is for edit the sub category # %(scid)s in main category # %(mcid)s' % locals()
-@app.route('/mcategory/<int:mcid>/scategory/<int:scid>/delete')
-def deletesubCategory(mcid,scid):
-	session = DBSession()
-	return 'Here you can delete the sub category # %(scid)s in main category # %(mcid)s' % locals()
-@app.route('/mcategory/<int:mcid>/scategory/<int:scid>/dcategory')
-@app.route('/mcategory/<int:mcid>/scategory/<int:scid>/')
-def detailCategories(mcid,scid):
-	session = DBSession()
-	return 'Here you can see detail categories in the sub category # %(scid)s in main category # %(mcid)s' % locals()
-@app.route('/mcategory/<int:mcid>/scategory/<int:scid>/dcategory/new')
-def newdetailCategory(mcid,scid):
-	session = DBSession()
-	return 'This is for creating a new detail category in the sub category # %(scid)s in main category # %(mcid)s' % locals()
-@app.route('/mcategory/<int:mcid>/scategory/<int:scid>/dcategory/<int:dcid>/edit')
-def editdetailCategory(mcid,scid,dcid):
-	session = DBSession()
-	return 'This is for editing the detail category # %(dcid)s in the sub category # %(scid)s in main category # %(mcid)s' % locals()
-@app.route('/mcategory/<int:mcid>/scategory/<int:scid>/dcategory/<int:dcid>/delete')
-def deletedetailCategory(mcid,scid,dcid):
-	session = DBSession()
-	return 'Here you can delete a detail category # %(dcid)s in the sub category # %(scid)s in main category # %(mcid)s' % locals()
-@app.route('/mcategory/<int:mcid>/<int:itid>/item')
-@app.route('/mcategory/<int:mcid>/<int:itid>/')
-def mainItems(mcid,itid):
-	session = DBSession()
-	return render_template("mItems.html", item = item)
+	stmt = text("SELECT i.*, l.parent_id as pid FROM items i OUTER LEFT JOIN lineage l ON i.category_id==l.child_id WHERE i.category_id = :x")
+	stmt = stmt.bindparams(x=mcid)
+	Main_Its = session.execute(stmt,{}).fetchall()
+	#(Items).filter_by(category_id = mcid).all()
+	rowcount = len(Main_Its)
+	print str(rowcount)
+	
+	return render_template("mItems.html", items = Main_Its)
 @app.route('/mcategory/<int:mcid>/scategory/<int:scid>/dcategory/<int:dcid>/item/new')
 def newItem(mcid,itid):
 	session = DBSession()
@@ -109,10 +91,24 @@ def editItem(itid):
 def deleteItem(itid):
 	session = DBSession()
 	return 'This is for deleting the item %(itid)s' 
-
+	
+	
 @app.route('/redirect/<int:mcid>')
+@app.route('/redirect/<int:mcid>/')
 def decide(mcid):
-	return 'mcid is the ID of this category'
+	session = DBSession()
+	Main_Cats = session.query(Lineage).with_entities(Lineage.child_id).filter_by(parent_id = mcid).all()
+	nr = len(Main_Cats)
+	#Main_Its = session.query(Items).filter_by(category_id = mcid).all()
+	
+	print "The query returned the following number of records: %s " % nr
+	print "The condition: " + str(nr<1)
+	if (nr<1):
+		return redirect(url_for('mainItems', mcid = mcid))
+		#return render_template("mainItems(mcid,itid))"no subcategories"
+		#return redirect("/mcategory/"+mcid, code=302)
+	else:
+		return redirect(url_for('subCategories', mcid = mcid))
 	
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=port)
+	app.run(host='0.0.0.0', port=port)

@@ -18,13 +18,13 @@ nav {
 .hyperspan {
     position:relative;
     width:100%;
-    height:100%;
+    height:90%;
     left:0;
     top:0;
 }
 .hyper {
     width:100%;
-    height:100%;
+    height:90%;
     left:0;
     top:0;
 }
@@ -49,6 +49,17 @@ h2 {
 	padding: 2%;
 	width: var(--main-measurement);
 	height: var(--main-measurement);
+    background-color: white;
+    float: left; 
+	border-radius: 2.5% 2.5% 2.5% 2.5%;
+}
+.floaty.large {
+	--main-measurement: 40vw;
+	--ancillary-measurement: 20vw;
+	margin: 2% 2% 2% 2%;
+	padding: 2%;
+	width: var(--main-measurement) !important; 
+	height: var(--ancillary-measurement) !important; 
     background-color: white;
     float: left; 
 	border-radius: 2.5% 2.5% 2.5% 2.5%;

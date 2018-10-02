@@ -27,22 +27,6 @@ class Categories(Base):
         }
 
         
-class Lineage(Base):
-    __tablename__ = 'lineage'
-
-    
-    id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey('categories.id'))
-    child_id = Column(Integer, ForeignKey('items.id'))
-    
-    @property
-    def serialize(self):
-        """Return object data in easily serializeable format"""
-        return {
-            'id': self.id,
-            'parentid': self.parent_id,
-            'childid': self.child_id
-        }
 
 class Items(Base):
     __tablename__ = 'items'
@@ -62,7 +46,25 @@ class Items(Base):
             'description': self.description,
             'id': self.id,
             'price': self.price,
-            'catid':categories.id
+            'categories_id':categories.id
+        }
+
+class Lineage(Base):
+    __tablename__ = 'lineage'
+
+    
+    id = Column(Integer, primary_key=True)
+    parent_id = Column(Integer, ForeignKey('categories.id'))
+    child_id = Column(Integer, ForeignKey('categories.id'))
+
+    
+    @property
+    def serialize(self):
+        """Return object data in easily serializeable format"""
+        return {
+            'id': self.id,
+            'parentid': self.parent_id,
+            'childid': self.child_id
         }
 
 
