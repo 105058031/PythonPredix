@@ -74,6 +74,7 @@ def mainItems(mcid):
 	stmt = text("SELECT i.*, l.parent_id as pid FROM items i OUTER LEFT JOIN lineage l ON i.category_id==l.child_id WHERE i.category_id = :x")
 	stmt = stmt.bindparams(x=mcid)
 	Main_Its = session.execute(stmt,{}).fetchall()
+	
 	#(Items).filter_by(category_id = mcid).all()
 	rowcount = len(Main_Its)
 	print str(rowcount)
@@ -100,10 +101,28 @@ def decide(mcid):
 	Main_Cats = session.query(Lineage).with_entities(Lineage.child_id).filter_by(parent_id = mcid).all()
 	nr = len(Main_Cats)
 	#Main_Its = session.query(Items).filter_by(category_id = mcid).all()
-	
+
 	print "The query returned the following number of records: %s " % nr
 	print "The condition: " + str(nr<1)
 	if (nr<1):
+		lastChild=mcid
+		Navs=dict()
+		stmt = text("SELECT c.name FROM categories c WHERE c.id == :x")
+		stmt = stmt.bindparams(x=lastChild)
+		Results = session.execute(stmt,{}).fetchall()
+		
+		Navs.update({mcid:Results[0][0]})
+		print "----------------------"
+		print str(mcid) + " - " + str(Results[0][0])
+		while (lastChild > 1):
+			stmt = text("SELECT l.parent_id, c.name FROM lineage l LEFT OUTER JOIN categories c ON c.id == l.parent_id WHERE l.child_id = :x")
+			stmt = stmt.bindparams(x=lastChild)
+			Results = session.execute(stmt,{}).fetchall()
+			print(str(Results[0][0]) + " - " + str(Results[0][1])) 
+			lastChild = Results[0][0]
+			if (lastChild>1):
+				Navs.update({Results[0][0]:Results[0][1]})
+		print "----------------------"
 		return redirect(url_for('mainItems', mcid = mcid))
 		#return render_template("mainItems(mcid,itid))"no subcategories"
 		#return redirect("/mcategory/"+mcid, code=302)
