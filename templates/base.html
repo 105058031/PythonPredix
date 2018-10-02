@@ -1,0 +1,19 @@
+<!doctype html>
+<title>{% block title %}{% endblock %} - item Catalog</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='core-design.css') }}">
+<style>
+
+</style>
+<nav>
+  <h1>Application</h1>
+</nav>
+<section class="content">
+  <header>
+    {% block header %}{% endblock %}
+  </header>
+  {% for message in get_flashed_messages() %}
+    <div class="flash">{{ message }}</div>
+  {% endfor %}
+  {% block content %}{% endblock %}
+</section>

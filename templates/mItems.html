@@ -1,0 +1,33 @@
+<!doctype html>
+{% extends 'base.html' %}
+
+{% block header %}
+<div>
+<div class="navigation" >
+  <a href="{{url_for('newmainCategory')}}" > 
+  {% block title %}<h2 class="-font--sans" style="top: 50%;">{{item.name}}
+  </h2> {% endblock %}
+  </div>
+  </div>
+  {% endblock %}
+
+ 
+{% block content %}
+
+<div class="floaty" style="width: 50vw; height: 30vh; border-radius: 2.5% 2.5% 2.5% 2.5%">
+<div>
+<p class="-font--sans"><b>{{item.name}}<b></p>
+<p class="-font--sans"><b>Item Description:</b>  {{item.description}}</p>
+<p class="-font--sans"><b>Price:</b>  {{item.price}}</p>
+</div>
+
+<a href='{{url_for('editItem', itid = item.id) }}'>Edit</a>
+
+<a href='{{url_for('deleteItem', itid = item.id) }}'>Delete</a>
+
+<a href='{{url_for('mainCategories', mcid = item.catid) }}'>Back</a>
+
+</div>
+{% endblock %}
+<!--<p>{{i.id}}</p>-->
+

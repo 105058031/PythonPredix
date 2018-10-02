@@ -1,5 +1,5 @@
 applications:
-  - name: codehandbook
+  - name: itemCatalog
     buildpack: python_buildpack 
     memory: 256M
     stack: cflinuxfs2

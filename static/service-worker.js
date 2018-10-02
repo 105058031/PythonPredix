@@ -1,0 +1,1 @@
+console.log('Service-worker.js successfully loaded! Nothing to see here, move on!')
