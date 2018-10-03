@@ -1,11 +1,27 @@
 <!doctype html>
 {% extends 'base.html' %}
+{% set last = navs[0] %}
 
+{% block title %} {{ last[1] }} {% endblock %}
 {% block header %}
 <div>
 <div class="navigation" >
   <a href="{{url_for('newmainCategory')}}" > <button class="ge-button -fill--solid -color--blue" style="float:right; border-radius: 4% 4% 4% 4%; margin 0px 0px 3vw 0px;"> Create New Category </button> </a>
-  <h2 class="-font--sans" style="top: 50%;">{% block title %}Main Categories{% endblock %}</h2> 
+  
+ {% for n in navs | reverse %}
+
+  
+  <a href='{{url_for('subCategories', mcid = n[0]) }}'>
+  
+  <h2 class="-font--sans" style="top: 50%; font-size: 2em;"> {{n[1]}} > </h2> 
+  
+  
+  </a>
+  
+  
+	
+  {% endfor %}  
+  
   </div>
   </div>
 {% endblock %}

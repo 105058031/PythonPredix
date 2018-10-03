@@ -1,20 +1,25 @@
 body {
     background-color: #c5c5c5;
 		margin:0px;
+	height:100vh;
 }
-nav {
-	display: inline-block;
-	width: 100%;
-	height: 40%;
-    background-color: #000032;
-	color: white;
-	font-color: white;
-	font-size: 2em;
-    float: left; 
-	margin: 0%;
-	padding: 0% 3% 0% 3% ;
-	font-family: "GE Inspira Sans";
+content {
+    background-color: #c5c5c5;
+		margin:0px;
+	height:100vh;
 }
+.nav-triangle-right {
+	display: inline;
+	width: 0;
+	height: 0;
+	border-top: 3vh solid transparent;
+	border-left: 6vh solid blue;
+	border-bottom: 3vh solid transparent;
+}
+
+
+
+
 .hyperspan {
     position:relative;
     width:100%;
@@ -35,6 +40,166 @@ h2 {
 	display: inline-block;
 	float:left;
 }
+
+
+
+.navigation{
+	display: inline-block;
+	width:94%; 
+	height:98%;
+	background-color: white; 
+	padding: 1vh 3vw 1vh 3vw;
+	
+}
+.floaty {
+	--main-measurement: 64vw;
+	margin: 8% 8% 8% 8%;
+	padding: 8%;
+	width: var(--main-measurement);
+	height: var(--main-measurement);
+    background-color: white;
+    float: left; 
+	border-radius: 4% 4% 4% 4%;
+}
+.floaty.large {
+	--main-measurement: 90vw;
+	--ancillary-measurement: 45vw;
+	margin: 5% 5% 5% 5%;
+	padding: 4%;
+	width: var(--main-measurement) !important; 
+	height: var(--ancillary-measurement) !important; 
+    background-color: white;
+    float: left; 
+	border-radius: 4% 4% 4% 4%;
+}
+button {
+	width: 40vw
+	margin: 0;
+	border-radius: 8px 8px 8px 8px;
+}
+nav {
+	display: inline-block;
+	width: 100%;
+	height: 80px;
+    background-color: #000032;
+	color: white;
+	font-color: white;
+	font-size: 1.3em;
+    float: left; 
+	margin: 0%;
+	padding: 18px 8% 38px 8% ;
+	font-family: "GE Inspira Sans";
+}
+.nav-rectangle{
+	position: fixed;
+	top:80px;
+	left:auto;
+	background-color: blue; 
+	width:fit-content;
+	color: white;	
+}
+
+@media screen and (min-width: 480px) {
+.navigation{
+	display: inline-block;
+	width:94%; 
+	height:98%;
+	background-color: white; 
+	padding: 1vh 3vw 1vh 3vw;
+	
+}
+.floaty {
+	--main-measurement: 32vw;
+	margin: 4% 4% 4% 4%;
+	padding: 4%;
+	width: var(--main-measurement);
+	height: var(--main-measurement);
+    background-color: white;
+    float: left; 
+	border-radius: 4% 4% 4% 4%;
+}
+.floaty.large {
+	--main-measurement: 80vw;
+	--ancillary-measurement: 40vw;
+	margin: 4% 4% 4% 4%;
+	padding: 4%;
+	width: var(--main-measurement) !important; 
+	height: var(--ancillary-measurement) !important; 
+    background-color: white;
+    float: left; 
+	border-radius: 4% 4% 4% 4%;
+}
+button {
+	width: 32vw
+	margin: 0;
+	border-radius: 8px 8px 8px 8px;
+}
+nav {
+	display: inline-block;
+	width: 100%;
+	height: 115px;
+    background-color: #000032;
+	color: white;
+	font-color: white;
+	font-size: 1.6em;
+    float: left; 
+	margin: 0%;
+	padding: 38px 8% 42px 8% ;
+	font-family: "GE Inspira Sans";
+}
+
+}
+@media screen and (min-width: 800px) {
+.navigation{
+	display: inline-block;
+	width:94%; 
+	height:98%;
+	background-color: white; 
+	padding: 1vh 3vw 1vh 3vw;
+	
+}
+.floaty {
+	--main-measurement: 21.3vw;
+	margin: 2% 3% 2% 3%;
+	padding: 2%;
+	width: var(--main-measurement);
+	height: var(--main-measurement);
+    background-color: white;
+    float: left; 
+	border-radius: 4% 4% 4% 4%;
+}
+.floaty.large {
+	--main-measurement: 40vw;
+	--ancillary-measurement: 20vw;
+	margin: 2% 3% 2% 3%;
+	padding: 2%;
+	width: var(--main-measurement) !important; 
+	height: var(--ancillary-measurement) !important; 
+    background-color: white;
+    float: left; 
+	border-radius: 2.5% 2.5% 2.5% 2.5%;
+}
+button {
+	width: 20vw
+	margin: 0;
+	border-radius: 12px 12px 12px 12px;
+	
+}
+nav {
+	display: inline-block;
+	width: 100%;
+	height: 130px;
+    background-color: #000032;
+	color: white;
+	font-color: white;
+	font-size: 2em;
+    float: left; 
+	margin: 0%;
+	padding: 35px 8% 42px 8% ;
+	font-family: "GE Inspira Sans";
+}
+}
+@media screen and (min-width: 1200px) {
 .navigation{
 	display: inline-block;
 	width:94%; 
@@ -51,7 +216,7 @@ h2 {
 	height: var(--main-measurement);
     background-color: white;
     float: left; 
-	border-radius: 2.5% 2.5% 2.5% 2.5%;
+	border-radius: 4% 4% 4% 4%;
 }
 .floaty.large {
 	--main-measurement: 40vw;
@@ -65,10 +230,24 @@ h2 {
 	border-radius: 2.5% 2.5% 2.5% 2.5%;
 }
 button {
+	width: 20vw
 	margin: 0;
-	border-radius: 2.5% 2.5% 2.5% 2.5%;
+	border-radius: 12px 12px 12px 12px;
 }
-
+nav {
+	display: inline-block;
+	width: 100%;
+	height: 130px;
+    background-color: #000032;
+	color: white;
+	font-color: white;
+	font-size: 2em;
+    float: left; 
+	margin: 0%;
+	padding: 35px 8% 42px 8% ;
+	font-family: "GE Inspira Sans";
+}
+}
 a {
 	font-family: "GE Inspira Sans";
 }

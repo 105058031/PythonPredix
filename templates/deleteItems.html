@@ -1,3 +1,4 @@
+
 <!doctype html>
 {% extends 'base.html' %}
 {% set last = navs[0] %}
@@ -31,6 +32,7 @@
 
  
 {% block content %}
+
 {% for i in items %}
 <div class="floaty large" style="border-radius: 2.5% 2.5% 2.5% 2.5%">
 <div>
@@ -44,10 +46,12 @@
 
 <a href='{{url_for('deleteItem', itid = i.id) }}'>Delete</a>
 
-<a href='{{url_for('subCategories', mcid = i.pid) }}'>Back</a>
+<a href='{{url_for('subCategories', mcid = i.pid) }}'>Cancel</a>
 
 </div>
 {% endfor %}
+
 {% endblock %}
 <!--<p>{{i.id}}</p>-->
+
 
