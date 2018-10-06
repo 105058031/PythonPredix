@@ -23,7 +23,7 @@ DBSession = sessionmaker(bind=engine)
 # revert all of them back to the last commit by calling
 # session.rollback()
 session = DBSession()
-Cat1=Categories(id="1",name="Main")
+Cat1=Categories(id="1",name="Main Categories")
 session.add(Cat1)
 session.commit()
 Cat2=Categories(id="2",name="Engines")

@@ -1,5 +1,5 @@
 applications:
   - name: itemCatalog
-    buildpack: python_buildpack 
+    buildpack: https://github.com/cloudfoundry/python-buildpack.git
     memory: 256M
     stack: cflinuxfs2

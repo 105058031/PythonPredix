@@ -7,12 +7,18 @@
 <div>
 <div class="navigation" >
   
-   
+  {% if bool == true %}
+<a href="{{url_for('newmainCategory',mcid=last[0] )}}" > <button class="ge-button -fill--solid -color--blue" style="float:right; border-radius: 8px 8px 8px 8px; margin 0px 0px 3vw 0px;"> Create New Category </button> </a>
+{% else %}
+{% endif %}
+  <a href="{{url_for('newItem',mcid=last[0] )}}" > <button class="ge-button -fill--solid -color--blue" style="float:right; border-radius: 8px 8px 8px 8px; margin 0px 0px 3vw 0px;"> Create New Item </button> </a>
   
+
+
   {% for n in navs | reverse %}
 
   
-  <a href='{{url_for('subCategories', mcid = n[0]) }}'>
+  <a href='{{url_for('decide', mcid = n[0]) }}'>
   
   <h2 class="-font--sans" style="top: 50%; font-size: 2em;"> {{n[1]}} > 
   </h2> 
@@ -31,20 +37,27 @@
 
  
 {% block content %}
+
+{% if bool == true %}
+<div>
+<h2 class="-font--sans" style="top: 50%; font-size: 2em;"> This category has no items to display yet! 
+  </h2> 
+</div>
+{% else %}
+{% endif %}
+
 {% for i in items %}
 <div class="floaty large" style="border-radius: 2.5% 2.5% 2.5% 2.5%">
-<div>
 <p class="-font--sans"><b>{{i.name}}<b></p>
-<p class="-font--sans"><b>i Description:</b>  {{i.description}}</p>
+<p class="-font--sans"><b>Description:</b>  {{i.description}}</p>
 <p class="-font--sans"><b>Price:</b>  {{i.price}}</p>
 <p class="-font--sans"><b>Owner Cat:</b>  {{i.category_id}}</p>
-</div>
 
 <a href='{{url_for('editItem', itid = i.id) }}'>Edit</a>
 
 <a href='{{url_for('deleteItem', itid = i.id) }}'>Delete</a>
 
-<a href='{{url_for('subCategories', mcid = i.pid) }}'>Back</a>
+<a href='{{url_for('decide', mcid = i.pid) }}'>Back</a>
 
 </div>
 {% endfor %}

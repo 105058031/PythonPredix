@@ -1,10 +1,21 @@
 <!doctype html>
 {% extends 'base.html' %}
 
-{% block header %}
-  <h2 class="-font--sans">{% block title %}Create new Category{% endblock %}</h2>
-{% endblock %}
+{% set last = navs[0] %}
 
+{% block title %} New Category in {{ last[1] }} {% endblock %}
+{% block header %}
+<div>
+<div class="navigation" >
+  {% for n in navs | reverse %}
+  <a href='{{url_for('decide', mcid = n[0]) }}'>
+  <h2 class="-font--sans" style="top: 50%; font-size: 2em;"> {{n[1]}} > 
+  </h2> 
+  </a>
+  {% endfor %}    
+  </div>
+  </div>
+  {% endblock %}
 {% block content %}
 
 
@@ -12,7 +23,7 @@
 <div class="floaty" style="width: 50vw; height: 30vh; border-radius: 2.5% 2.5% 2.5% 2.5%">
 
 
-<form action="#" method = 'post'>
+<form action="{{ url_for('newmainCategory', mcid=last[0])}}" method = 'post'>
 
 
 	<p>Name:</p>
@@ -20,7 +31,7 @@
 
 
 <input class="ge-button -fill--solid" style="border-radius: 5% 5% 5% 5%" type='submit' value='Create'>
-<a class="-font--sans ge-button -fill--solid" style="border-radius: 5% 5% 5% 5%" href='{{url_for('mainCategories')}}'>Cancel</a>
+<a class="-font--sans ge-button -fill--solid" style="border-radius: 5% 5% 5% 5%" href='{{url_for('decide', mcid = last[0]) }}''>Cancel</a>
 </form>
 </div>
 {% endblock %}

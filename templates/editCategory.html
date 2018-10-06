@@ -1,20 +1,41 @@
 <!doctype html>
 {% extends 'base.html' %}
+{% set last = navs[0] %}
 
+{% block title %} Edit {{ last[1] }} {% endblock %}
 {% block header %}
-  <h2 class="-font--sans">{% block title %}Edit category{% endblock %}</h2>
-{% endblock %}
+<div>
+<div class="navigation" >
+  
+  
+    {% for n in navs | reverse %}
+
+  
+  <a href='{{url_for('decide', mcid = n[0]) }}'>
+  
+  <h2 class="-font--sans" style="top: 50%; font-size: 2em;"> {{n[1]}} > 
+  </h2> 
+  
+  
+  </a>
+  
+  
+	
+  {% endfor %}  
+  
+  </div>
+  </div>
+  {% endblock %}
 
 {% block content %}
 
 
 
 <div class="floaty" style="width: 50vw; height: 30vh; border-radius: 2.5% 2.5% 2.5% 2.5%">
-
-
-<form action="#" method='post'>
+<h2 class="-font--sans">Edit category</h2>
+<form action="{{ url_for('editmainCategory', mcid=last[0])}}" method = 'post'>
 	<p> Name: </p>
-		<input  type='text' size='30' name='name' placeholder='{{mcid}}'>
+		<input  type='text' size='30' name='name' placeholder='{{last[1]}}'>
 	<input class="ge-button -fill--solid" style="border-radius: 5% 5% 5% 5%" type='submit' value='Edit'>
 <a class="-font--sans ge-button -fill--solid" style="border-radius: 5% 5% 5% 5%" href='{{url_for('mainCategories')}}'>Cancel</a>
 

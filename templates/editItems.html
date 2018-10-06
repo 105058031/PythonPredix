@@ -1,0 +1,51 @@
+<!doctype html>
+{% extends 'base.html' %}
+{% set last = navs[0] %}
+
+{% block title %} {{ last[1] }} {% endblock %}
+{% block header %}
+<div>
+<div class="navigation" >
+  {% for n in navs | reverse %}
+  <a href='{{url_for('decide', mcid = n[0]) }}'>
+  <h2 class="-font--sans" style="top: 50%; font-size: 2em;"> {{n[1]}} > 
+  </h2> 
+  </a>
+  {% endfor %}    
+  </div>
+  </div>
+  {% endblock %}
+   
+{% block content %}
+
+<div class="floaty large" style="border-radius: 2.5% 2.5% 2.5% 2.5%">
+
+
+<h1> Edit Part </h1>
+
+<form action="{{ url_for('editItem', itid=item.id)}}" method = 'post'>
+
+<dl>
+	<dt>Name:</dt>
+		<dd><input type ='text' size='30' name='name' placeholder = '{{item.name }}'></dd>
+	<dt>Description:</dt>
+		<dd><textarea name = 'description' rows='5' cols='40' placeholder = '{{item.description }}'></textarea></dd>
+	<dt>Price:</dt>
+		<dd><input type = 'text' size = '8' name='price' placeholder = '{{item.price}}'></dd>
+
+
+</dl>
+
+
+<input type='submit' value='Edit'>
+
+<a href='{{url_for('decide', mcid = item.pid) }}'>Back</a>
+</form>
+
+
+
+</div>
+
+{% endblock %}
+<!--<p>{{i.id}}</p>-->
+

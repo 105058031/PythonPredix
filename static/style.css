@@ -40,8 +40,27 @@ h2 {
 	display: inline-block;
 	float:left;
 }
-
-
+.ge-button {
+	width: auto;
+	margin: 0;
+	border-radius: 8px 8px 8px 8px;
+	font-family: "GE Inspira Sans";
+}
+.ge-button:hover{
+	margin: 0.5rem;
+	width: auto;
+	margin: 0;
+	border-radius: 8px 8px 8px 8px;
+	font-family: "GE Inspira Sans";
+	background-color: grey !important;
+	border-color: grey !important;
+}
+.ge-button.-color--blue:hover{
+	margin: 0.5rem;
+	font-family: "GE Inspira Sans" !important;
+	background-color: grey !important;
+	border-color: grey !important;
+}
 
 .navigation{
 	display: inline-block;
@@ -59,18 +78,18 @@ h2 {
 	height: var(--main-measurement);
     background-color: white;
     float: left; 
-	border-radius: 4% 4% 4% 4%;
+	border-radius: 8px 8px 8px 8px;
 }
 .floaty.large {
 	--main-measurement: 90vw;
-	--ancillary-measurement: 45vw;
+	--ancillary-measurement: 65vw;
 	margin: 5% 5% 5% 5%;
 	padding: 4%;
 	width: var(--main-measurement) !important; 
 	height: var(--ancillary-measurement) !important; 
     background-color: white;
     float: left; 
-	border-radius: 4% 4% 4% 4%;
+	border-radius: 12px 12px 12px 12px;
 }
 button {
 	width: 40vw
@@ -116,24 +135,20 @@ nav {
 	height: var(--main-measurement);
     background-color: white;
     float: left; 
-	border-radius: 4% 4% 4% 4%;
+	border-radius: 8px 8px 8px 8px;
 }
 .floaty.large {
 	--main-measurement: 80vw;
-	--ancillary-measurement: 40vw;
+	--ancillary-measurement: 60vw;
 	margin: 4% 4% 4% 4%;
 	padding: 4%;
 	width: var(--main-measurement) !important; 
 	height: var(--ancillary-measurement) !important; 
     background-color: white;
     float: left; 
-	border-radius: 4% 4% 4% 4%;
+	border-radius: 14px 14px 14px 14px;
 }
-button {
-	width: 32vw
-	margin: 0;
-	border-radius: 8px 8px 8px 8px;
-}
+
 nav {
 	display: inline-block;
 	width: 100%;
@@ -166,18 +181,18 @@ nav {
 	height: var(--main-measurement);
     background-color: white;
     float: left; 
-	border-radius: 4% 4% 4% 4%;
+	border-radius: 8px 8px 8px 8px;
 }
 .floaty.large {
 	--main-measurement: 40vw;
-	--ancillary-measurement: 20vw;
+	--ancillary-measurement: 40vw;
 	margin: 2% 3% 2% 3%;
 	padding: 2%;
 	width: var(--main-measurement) !important; 
 	height: var(--ancillary-measurement) !important; 
     background-color: white;
     float: left; 
-	border-radius: 2.5% 2.5% 2.5% 2.5%;
+	border-radius: 16px 16px 16px 16px;
 }
 button {
 	width: 20vw
@@ -216,18 +231,18 @@ nav {
 	height: var(--main-measurement);
     background-color: white;
     float: left; 
-	border-radius: 4% 4% 4% 4%;
+	border-radius: 8px 8px 8px 8px;
 }
 .floaty.large {
 	--main-measurement: 40vw;
-	--ancillary-measurement: 20vw;
+	--ancillary-measurement: 460px;
 	margin: 2% 2% 2% 2%;
-	padding: 2%;
+	padding: 20px;
 	width: var(--main-measurement) !important; 
 	height: var(--ancillary-measurement) !important; 
     background-color: white;
     float: left; 
-	border-radius: 2.5% 2.5% 2.5% 2.5%;
+	border-radius: 16px 16px 16px 16px;
 }
 button {
 	width: 20vw

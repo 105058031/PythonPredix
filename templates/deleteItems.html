@@ -13,7 +13,7 @@
   {% for n in navs | reverse %}
 
   
-  <a href='{{url_for('subCategories', mcid = n[0]) }}'>
+  <a href='{{url_for('decide', mcid = n[0]) }}'>
   
   <h2 class="-font--sans" style="top: 50%; font-size: 2em;"> {{n[1]}} > 
   </h2> 
@@ -33,25 +33,26 @@
  
 {% block content %}
 
-{% for i in items %}
-<div class="floaty large" style="border-radius: 2.5% 2.5% 2.5% 2.5%">
+
+<div class="floaty large" >
+<h2 class="-font--sans" style="font-size: 1.3em;"> Are you sure you want to delete {{item.name}}? <h2>
 <div>
-<p class="-font--sans"><b>{{i.name}}<b></p>
-<p class="-font--sans"><b>i Description:</b>  {{i.description}}</p>
-<p class="-font--sans"><b>Price:</b>  {{i.price}}</p>
-<p class="-font--sans"><b>Owner Cat:</b>  {{i.category_id}}</p>
+<p class="-font--sans" style="font-size: 1em;"><b>{{item.name}}<b></p>
+<p class="-font--sans" style="font-size: 1em;"><b>Description:</b>  {{item.description}}</p>
+<p class="-font--sans" style="font-size: 1em;"><b>Price:</b>  {{item.price}}</p>
+<p class="-font--sans" style="font-size: 1em;"><b>Owner Cat:</b>  {{item.category_id}}</p>
+</div>
+<form action="{{url_for('deleteItem', itid = item.id) }}" method = 'post'>
+
+<input class="ge-button -fill--solid -color--blue" style="border-color: crimson; background-color: crimson; width: 12vw; border-radius: 8px 8px 8px 8px" type='submit', value = 'Delete'>
+
+
+<a href='{{url_for('decide', mcid = item.category_id) }}'>Cancel</a>
+
 </div>
 
-<a href='{{url_for('editItem', itid = i.id) }}'>Edit</a>
-
-<a href='{{url_for('deleteItem', itid = i.id) }}'>Delete</a>
-
-<a href='{{url_for('subCategories', mcid = i.pid) }}'>Cancel</a>
-
-</div>
-{% endfor %}
 
 {% endblock %}
-<!--<p>{{i.id}}</p>-->
+<!--<p>{{item.id}}</p>-->
 
 

@@ -1,0 +1,58 @@
+<!doctype html>
+{% extends 'base.html' %}
+{% set last = navs[0] %}
+
+{% block title %} {{ last[1] }} {% endblock %}
+{% block header %}
+<div>
+<div class="navigation" >   
+  
+  {% for n in navs | reverse %}
+
+  <a href='{{url_for('decide', mcid = n[0]) }}'>
+  <h2 class="-font--sans" style="top: 50%; font-size: 2em;"> {{n[1]}} > 
+  </h2> 
+  </a>
+  	
+  {% endfor %}  
+   
+  </div>
+  </div>
+  {% endblock %}
+ 
+{% block content %}
+
+
+
+
+<div class="floaty large" style="border-radius: 14px 14px 14px 14px;">
+<h1 class="-font--sans">New Menu Item</h1>
+<form action="{{ url_for('newItem', mcid=last[0] )}}" method = 'post'>
+
+<dl>
+	<dt class="-font--sans">Name:</dt>
+		<dd><input type ='text' size='30' name='name' required></dd>
+            <dt class="-font--sans">Description:</dt>
+                        <dd><textarea name = 'description' rows='5' cols='40' required></textarea></dd>
+            <dt class="-font--sans">Price:</dt>
+                        <dd><input type = 'text' size = '8' name='price' required></dd>
+            <!--<dt>Course:</dt>
+                        <dd><input type ='radio' name='course' value='Appetizer' checked>Appetizer</dd>
+                        <dd><input type ='radio' name='course' value='Entree'>Entree</dd>
+                        <dd><input type ='radio' name='course' value='Dessert'>Dessert</dd>
+                        <dd><input type ='radio' name='course' value='Beverage'>Beverage</dd>-->
+</dl>
+
+
+<input type='submit' class="ge-button -fill--solid -color--blue" style="width: 12vw; border-radius: 8px 8px 8px 8px" value='Create'>
+<a href='{{url_for('decide', mcid = last[0]) }}'>Cancel</a>
+</form>
+</div>
+
+
+
+
+
+{% endblock %}
+<!--<p>{{i.id}}</p>-->
+

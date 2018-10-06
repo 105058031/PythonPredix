@@ -1,1 +1,13 @@
+pip==9.0.3
+pip-tools
+pip-upgrade
+pip-reqs==0.6
+https://files.pythonhosted.org/packages/ee/a7/d6d238d927df355d4e4e000670342ca4705a72f0bf694027cf67d9bcf5af/passlib-1.7.1-py2.py3-none-any.whl
+werkzeug==0.14.1
 Flask
+Flask-Login==0.1.3
+Flask-SQLAlchemy==0.16
+git+https://github.com/miguelgrinberg/Flask-HTTPAuth.git@master
+oauth2client
+requests
+httplib2

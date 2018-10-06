@@ -6,7 +6,7 @@
 {% block header %}
 <div>
 <div class="navigation" >
-  <a href="{{url_for('newmainCategory')}}" > <button class="ge-button -fill--solid -color--blue" style="float:right; border-radius: 4% 4% 4% 4%; margin 0px 0px 3vw 0px;"> Create New Category </button> </a>
+  <a href="{{url_for('newmainCategory', mcid = last[0])}}" > <button class="ge-button -fill--solid -color--blue" style="float:right; border-radius: 8px 8px 8px 8px; margin 0px 0px 3vw 0px;"> Create New Category </button> </a>
   
  {% for n in navs | reverse %}
 
