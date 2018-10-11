@@ -79,6 +79,11 @@ Deploy to heroku/predix
 Example application:
 	https://itemcatalog.run.aws-usw02-pr.ice.predix.io/
 
+# Credits
+Used Codehandbooks predix supported flask package:
+https://github.com/codehandbook/PythonPredix
+
+The sample database information was sourced from wikipedia and www.jegs.com 
 
 # Authors
 

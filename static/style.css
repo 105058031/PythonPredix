@@ -41,15 +41,16 @@ h2 {
 	float:left;
 }
 .ge-button {
+	
 	width: auto;
-	margin: 0;
+	background-color: darkblue;
+	border-color: darkblue;
 	border-radius: 8px 8px 8px 8px;
 	font-family: "GE Inspira Sans";
 }
 .ge-button:hover{
-	margin: 0.5rem;
+	
 	width: auto;
-	margin: 0;
 	border-radius: 8px 8px 8px 8px;
 	font-family: "GE Inspira Sans";
 	background-color: grey !important;

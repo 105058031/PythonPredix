@@ -69,7 +69,7 @@ def showLogin(Bool=False):
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
     # Validate state token
-    if request.args.get('state') ! =  login_session['state']:
+    if request.args.get('state') != login_session['state']:
         response = make_response(json.dumps('Invalid state parameter.'), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
@@ -89,9 +89,11 @@ def gconnect():
 
     # Check that the access token is valid.
     access_token = credentials.access_token
-    url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token = %s'
-           % access_token)
+    url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=')
+    url = url + str(access_token)
     h = httplib2.Http()
+    res = h.request(url, 'GET')[1]
+    print res
     result = json.loads(h.request(url, 'GET')[1])
     # If there was an error in the access token info, abort.
     if result.get('error') is not None:
@@ -101,14 +103,14 @@ def gconnect():
 
     # Verify that the access token is used for the intended user.
     gplus_id = credentials.id_token['sub']
-    if result['user_id'] ! =  gplus_id:
+    if result['user_id'] != gplus_id:
         response = make_response(
             json.dumps("Token's user ID doesn't match given user ID."), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
 
     # Verify that the access token is valid for this app.
-    if result['issued_to'] ! =  CLIENT_ID:
+    if result['issued_to'] != CLIENT_ID:
         response = make_response(
             json.dumps("Token's client ID does not match app's."), 401)
         print "Token's client ID does not match app's."
@@ -140,12 +142,12 @@ def gconnect():
     login_session['email'] = data['email']
 
     output = ''
-    output + =  '<h1>Welcome, '
-    output + =  login_session['username']
-    output + =  '!</h1>'
-    output + =  '<img src = "'
-    output + =  login_session['picture']
-    output + =  ''' " style = "width: 300px; height:
+    output += '<h1>Welcome, '
+    output += login_session['username']
+    output += '!</h1>'
+    output += '<img src = "'
+    output += login_session['picture']
+    output += ''' " style = "width: 300px; height:
     300px;border-radius: 150px;-webkit-border-radius: 150px;
     -moz-border-radius: 150px;"> '''
     flash("you are now logged in as %s" % login_session['username'])
@@ -225,6 +227,31 @@ def get_user(id):
 def sw():
     session = DBSession()
     return app.send_static_file('service-worker.js')
+
+
+@app.route('/category/<int:mcid>/JSON')
+def CategoryJSON(mcid):
+    session = DBSession()
+    Main_Cats = session.query(Lineage).\
+        with_entities(Lineage.child_id).\
+        filter_by(parent_id=mcid).\
+        all()
+    Main_Cats = [r for r, in Main_Cats]
+
+    Cats_Disp = session.query(Categories).\
+        filter(Categories.id.in_((Main_Cats))).\
+        all()
+    return jsonify(Categories=[i.serialize for i in Cats_Disp])
+
+
+@app.route('/item/<int:itid>/JSON')
+def ItemJSON(itid):
+    session = DBSession()
+    print str(itid)
+    Main_Its = session.query(Items).\
+        filter_by(id=itid).\
+        all()
+    return jsonify(Items=[i.serialize for i in Main_Its])
 
 
 @app.route('/')
@@ -318,6 +345,11 @@ def editmainCategory(mcid):
         return redirect('/login')
     else:
         Bool = True
+    parentCatId = session.query(Lineage).\
+        with_entities(Lineage.parent_id).\
+        filter_by(child_id=mcid).\
+        first()
+    pid = parentCatId[0]
     if request.method == 'POST':
         if request.form['name']:
             print("request name to change to is:" + request.form['name'])
@@ -369,7 +401,7 @@ def mainItems(mcid):
     else:
         Bool = True
     stmt = text("""SELECT i.*, l.parent_id as pid FROM items i
-               INNER JOIN lineage l ON i.category_id =  = l.child_id
+               INNER JOIN lineage l ON i.category_id = l.child_id
                WHERE i.category_id = :x""")
     stmt = stmt.bindparams(x=mcid)
     Main_Its = session.execute(stmt, {}).fetchall()
@@ -442,7 +474,7 @@ def editItem(itid):
     else:
         stmt = text("""SELECT i.id, i.name, i.description, i.price,
                     l.parent_id as pid FROM items i OUTER LEFT JOIN
-                    lineage l ON i.category_id =  = l.child_id
+                    lineage l ON i.category_id = l.child_id
                     WHERE i.category_id = :x""")
         stmt = stmt.bindparams(x=mcid)
         editedItem = session.execute(stmt, {}).fetchall()
@@ -495,7 +527,7 @@ def navigationSnippet(id):
     if (id > 0):
         lastChild = id
         Navs = []
-        stmt = text("SELECT c.name FROM categories c WHERE c.id  =  =  :x")
+        stmt = text("SELECT c.name FROM categories c WHERE c.id=:x")
         stmt = stmt.bindparams(x=lastChild)
         Results = session.execute(stmt, {}).fetchall()
         Navs.append([id, Results[0][0]])
@@ -503,7 +535,7 @@ def navigationSnippet(id):
         print str(id) + " - " + str(Results[0][0])
         while (lastChild > 1):
             stmt = text("""SELECT l.parent_id, c.name FROM lineage l
-                        LEFT OUTER JOIN categories c ON c.id  =  =  l.parent_id
+                        LEFT OUTER JOIN categories c ON c.id = l.parent_id
                         WHERE l.child_id = :x""")
             stmt = stmt.bindparams(x=lastChild)
             Results = session.execute(stmt, {}).fetchall()
