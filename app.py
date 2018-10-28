@@ -6,9 +6,10 @@ import string
 import os
 from flask import Flask, render_template, request, redirect
 from flask import jsonify, url_for, flash, abort, g
-from sqlalchemy import create_engine, asc, text, bindparam
-from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy.orm import scoped_session
+from sqlalchemy import func
+from sqlalchemy import create_engine, asc, text, bindparam 
+from sqlalchemy.orm import sessionmaker,scoped_session
+from sqlalchemy.orm import relationship
 from db_setup import Categories, Lineage, Items, User, Base
 from flask import session as login_session
 from flask_httpauth import HTTPBasicAuth
@@ -58,6 +59,29 @@ def verify_password(username_or_token, password):
     return True
 
 
+@app.route('/verify', methods=['POST'])
+def verification():
+    session = DBSession()
+    Bool = False
+    Username = request.form['username']
+    Password = request.form['password']
+    print "verifying the password now"
+    user = session.query(User).filter_by(username=Username).one()
+    print "user: " + str(user)
+    if user is not None:
+        print "Primary verification succeeded, username was found!"
+        if user.verify_password(Password):
+            print "Secondary verification succeeded, password is matching!"
+            login_session['username'] = Username
+            return redirect(url_for('mainCategories', mcid=1))
+        else:
+            print "Verification failed: Incorrect Password"
+            return render_template('oauthLogin.html', bool=Bool, STATE=login_session['state'], LG=False)
+    else:
+        print "Verification failed: No Such User!"
+        return render_template('oauthLogin.html', bool=Bool, STATE=login_session['state'], LG=False)
+    
+    
 @app.route('/login')
 def showLogin(Bool=False):
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
@@ -192,6 +216,7 @@ def gdisconnect():
 @app.route('/api/users', methods=['POST'])
 def new_user():
     session = DBSession()
+    Bool = False
     if 'username' not in login_session:
         return redirect('/login')
     username = request.json.get('username')
@@ -215,6 +240,7 @@ def new_user():
 @app.route('/api/users/<int:id>')
 def get_user(id):
     session = DBSession()
+    Bool = False
     if 'username' not in login_session:
         return redirect('/login')
     user = session.query(User).filter_by(id=id).one()
@@ -247,21 +273,32 @@ def CategoryJSON(mcid):
 @app.route('/item/<int:itid>/JSON')
 def ItemJSON(itid):
     session = DBSession()
-    print str(itid)
+    print "Item Id" + str(itid)
     Main_Its = session.query(Items).\
         filter_by(id=itid).\
         all()
     return jsonify(Items=[i.serialize for i in Main_Its])
 
 
+@app.route('/lineage/<int:childid>/JSON')
+def LineJSON(childid):
+    session = DBSession()
+    print "ChildId:" + str(childid)
+    Main_Its = session.query(Items).\
+        filter_by(id=itid).\
+        all()
+    return jsonify(Items=[i.serialize for i in Main_Its])
+    
 @app.route('/')
 @app.route('/mcategory')
 def mainCategories(mcid='1'):
     session = DBSession()
+    Bool = False
     if 'username' not in login_session:
-        Bool = False
+        return redirect('/login')
     else:
         Bool = True
+        print "Current username: " + login_session['username']
     Navs = [[1, "Main Categories"]]
     Main_Cats = session.query(Lineage).\
         with_entities(Lineage.child_id).\
@@ -281,8 +318,9 @@ def mainCategories(mcid='1'):
 @app.route('/mcategory/<int:mcid>/s')
 def subCategories(mcid):
     session = DBSession()
+    Bool = False
     if 'username' not in login_session:
-        Bool = False
+        return redirect('/login')
     else:
         Bool = True
     Main_Cats = session.query(Lineage).\
@@ -305,6 +343,7 @@ def subCategories(mcid):
 @app.route('/mcategory/<int:mcid>/new', methods=['GET', 'POST'])
 def newmainCategory(mcid):
     session = DBSession()
+    Bool = False
     if 'username' not in login_session:
         return redirect('/login')
     else:
@@ -319,7 +358,8 @@ def newmainCategory(mcid):
         all()
     NavItems = navigationSnippet(mcid)
     if request.method == 'POST':
-        newCategory = Categories(name=request.form['name'])
+        Us1 = session.query(User).filter_by(username=login_session['username'] ).one()
+        newCategory = Categories(name=request.form['name'], user=Us1)
         session.add(newCategory)
         session.commit()
         nId = session.query(Categories).\
@@ -341,6 +381,7 @@ def newmainCategory(mcid):
 def editmainCategory(mcid):
     session = DBSession()
 
+    Bool = False
     if 'username' not in login_session:
         return redirect('/login')
     else:
@@ -351,13 +392,28 @@ def editmainCategory(mcid):
         first()
     pid = parentCatId[0]
     if request.method == 'POST':
-        if request.form['name']:
-            print("request name to change to is:" + request.form['name'])
-            session.query(Categories).\
-                filter_by(id=mcid).\
-                update({"name": request.form['name']})
-            session.commit()
-            return redirect(url_for('subCategories', mcid=pid))
+        CatUsId = session.query(Categories).\
+        with_entities(Categories.user_id).\
+        filter_by(id=mcid).\
+        first()
+        Us1=session.query(User).\
+        filter_by(id=CatUsId[0]).\
+        first()
+        Us2=session.query(User).filter_by(username=login_session['username'] ).one()
+        if (Us1==Us2):
+            if request.form['name']:
+                session.query(Categories).\
+                    filter_by(id=mcid).\
+                    update({"name": request.form['name']})
+                session.commit()
+                return redirect(url_for('subCategories', mcid=pid))
+        else:
+            flash('You are not authorized to edit this Category')
+            NavItems = navigationSnippet(mcid)
+            return render_template("editCategory.html",
+                               mcid=mcid,
+                               navs=NavItems,
+                               LG=Bool)
     else:
         NavItems = navigationSnippet(mcid)
         return render_template("editCategory.html",
@@ -369,11 +425,11 @@ def editmainCategory(mcid):
 @app.route('/mcategory/<int:mcid>/delete', methods=['GET', 'POST'])
 def deletemainCategory(mcid):
     session = DBSession()
+    Bool = False
     if 'username' not in login_session:
         return redirect('/login')
     else:
         Bool = True
-    categoriesToDelete = session.query(Categories).filter_by(id=mcid).one()
     parentCatId = session.query(Lineage).\
         with_entities(Lineage.parent_id).\
         filter_by(child_id=mcid).\
@@ -381,9 +437,33 @@ def deletemainCategory(mcid):
     pid = parentCatId[0]
     print "This is the parentCatid: " + str(pid)
     if request.method == 'POST':
-        session.delete(categoriesToDelete)
-        session.commit()
-        return redirect(url_for('subCategories', mcid=pid))
+        CatUsId = session.query(Categories).\
+        with_entities(Categories.user_id).\
+        filter_by(id=mcid).\
+        first()
+        Us1=session.query(User).\
+        filter_by(id=CatUsId[0]).\
+        first()
+        Us2=session.query(User).filter_by(username=login_session['username'] ).one()
+        if (Us1==Us2):
+            CategoriesDel = session.query(Categories).filter_by(id=mcid).one()
+            session.delete(CategoriesDel)
+            session.commit()
+            orphanCategoryDelete()
+            orphanItemDeleter()
+            LineageDel = session.query(Lineage).filter_by(child_id=mcid).all()
+            for r in LineageDel:
+                session.delete(r)
+                session.commit()
+            return redirect(url_for('subCategories', mcid=pid))
+        else:
+            flash('You are not authorized to delete this Category')
+            NavItems = navigationSnippet(mcid)
+            return render_template("deleteCategory.html",
+                                   mcid=mcid,
+                                   navs=NavItems,
+                                   LG=Bool)
+            
     else:
         NavItems = navigationSnippet(mcid)
         return render_template("deleteCategory.html",
@@ -396,12 +476,13 @@ def deletemainCategory(mcid):
 @app.route('/mcategory/<int:mcid>/i')
 def mainItems(mcid):
     session = DBSession()
+    Bool = False
     if 'username' not in login_session:
         Bool = False
     else:
         Bool = True
     stmt = text("""SELECT i.*, l.parent_id as pid FROM items i
-               INNER JOIN lineage l ON i.category_id = l.child_id
+               LEFT OUTER JOIN lineage l ON i.category_id = l.child_id
                WHERE i.category_id = :x""")
     stmt = stmt.bindparams(x=mcid)
     Main_Its = session.execute(stmt, {}).fetchall()
@@ -422,6 +503,7 @@ def mainItems(mcid):
 @app.route('/mcategory/<int:mcid>/item/new', methods=['GET', 'POST'])
 def newItem(mcid):
     session = DBSession()
+    Bool = False
     if 'username' not in login_session:
         return redirect('/login')
     else:
@@ -430,12 +512,13 @@ def newItem(mcid):
     NavItems = navigationSnippet(mcid)
 
     if request.method == 'POST':
-        print "Request method was POST"
+        Us1 = session.query(User).filter_by(username=login_session['username']).one()
         newItem = Items(name=request.form['name'],
                         description=request.form['description'],
                         price=request.form['price'],
-                        category_id=mcid)
-        print
+                        category_id=mcid,
+                        user = Us1)
+        print "Adding new item"
         session.add(newItem)
         session.commit()
         return redirect(url_for('mainItems', mcid=mcid))
@@ -449,6 +532,7 @@ def newItem(mcid):
 @app.route('/item/<int:itid>/edit', methods=['GET', 'POST'])
 def editItem(itid):
     session = DBSession()
+    Bool = False
     if 'username' not in login_session:
         return redirect('/login')
     else:
@@ -461,16 +545,36 @@ def editItem(itid):
     mcid = parentCatId[0]
     NavItems = navigationSnippet(mcid)
     if request.method == 'POST':
-        editedItem = session.query(Items).filter_by(id=itid).one()
-        if request.form['name']:
-            editedItem.name = request.form['name']
-        if request.form['description']:
-            editedItem.description = request.form['description']
-        if request.form['price']:
-            editedItem.price = request.form['price']
-        session.add(editedItem)
-        session.commit()
-        return redirect(url_for('mainItems', mcid=mcid))
+        CatUsId = session.query(Items).\
+        with_entities(Items.user_id).\
+        filter_by(id=itid).\
+        first()
+        Us1=session.query(User).\
+        filter_by(id=CatUsId[0]).\
+        first()
+        Us2=session.query(User).filter_by(username=login_session['username'] ).one()
+        if (Us1==Us2):
+            editedItem = session.query(Items).filter_by(id=itid).one()
+            if request.form['name']:
+                editedItem.name = request.form['name']
+            if request.form['description']:
+                editedItem.description = request.form['description']
+            if request.form['price']:
+                editedItem.price = request.form['price']
+            session.add(editedItem)
+            session.commit()
+            return redirect(url_for('mainItems', mcid=mcid))
+        else:
+            flash('You are not authorized to edit this Item')
+            stmt = text("""SELECT i.id, i.name, i.description, i.price,
+                        l.parent_id as pid FROM items i OUTER LEFT JOIN
+                        lineage l ON i.category_id = l.child_id
+                        WHERE i.category_id = :x""")
+            stmt = stmt.bindparams(x=mcid)
+            editedItem = session.execute(stmt, {}).fetchall()
+            return render_template('editItems.html',
+                                   navs=NavItems,
+                                   item=editedItem[0], LG=Bool)
     else:
         stmt = text("""SELECT i.id, i.name, i.description, i.price,
                     l.parent_id as pid FROM items i OUTER LEFT JOIN
@@ -486,6 +590,7 @@ def editItem(itid):
 @app.route('/item/<int:itid>/delete', methods=['GET', 'POST'])
 def deleteItem(itid):
     session = DBSession()
+    Bool = False
     if 'username' not in login_session:
         return redirect('/login')
     else:
@@ -495,12 +600,28 @@ def deleteItem(itid):
         with_entities(Items.category_id). \
         filter_by(id=itid).one()
     mcid = parentCatId[0]
-    NavItems = navigationSnippet(mcid)
+    
     if request.method == 'POST':
-        session.delete(itemToDelete)
-        session.commit()
-        return redirect(url_for('subCategories', mcid=mcid))
+        CatUsId = session.query(Items).\
+        with_entities(Items.user_id).\
+        filter_by(id=itid).\
+        first()
+        Us1=session.query(User).\
+        filter_by(id=CatUsId[0]).\
+        first()
+        Us2=session.query(User).filter_by(username=login_session['username'] ).one()
+        if (Us1==Us2):
+            session.delete(itemToDelete)
+            session.commit()
+            return redirect(url_for('subCategories', mcid=mcid))
+        else:
+            flash('You are not authorized to delete this Item')
+            NavItems = navigationSnippet(mcid)
+            return render_template('deleteItems.html',
+                                   item=itemToDelete,
+                                   navs=NavItems, LG=Bool)
     else:
+        NavItems = navigationSnippet(mcid)
         return render_template('deleteItems.html',
                                item=itemToDelete,
                                navs=NavItems, LG=Bool)
@@ -544,6 +665,136 @@ def navigationSnippet(id):
             Navs.append(Results[0])
         print "----------------------"
         return Navs
+
+
+def orphanItemDeleter():
+    print "finding items"
+    session = DBSession()
+    current = 0
+    while 1>0:
+        CatList = session.query(Categories.id)
+        CatList = [r for (r,) in CatList]
+        cnter = 0
+        qu = session.query(Items.id).\
+            filter(Items.category_id.notin_(CatList))
+        if (qu.count())==0:
+            print "No more orphans found in the Items table!"
+            break
+        else:
+            print "Number of oprhan items found: " + str(qu.count())
+        query = session.query(Items.id).\
+            filter(Items.category_id.notin_(CatList)).\
+            all()
+        query = [r for (r,) in query]
+        ItemstoDelete = session.query(Items).\
+            filter(Items.category_id.notin_(CatList)).\
+            all()
+        cnter = 0
+        for row in ItemstoDelete:
+            print  ItemstoDelete[cnter].name + " was the name of the Item to be deleted"
+            print  ItemstoDelete[cnter].description + " was the description of the Item to be deleted"
+            session.delete(ItemstoDelete[cnter])
+            session.commit()
+            print "Item #" + str(cnter+1) + " has just been deleted!"
+            cnter += cnter
+        current += 1
+    return True
+
+
+def orphanCategoryDelete():
+    print "finding orphan categories"
+    session = DBSession()
+    current = 0
+    while 1>0:
+        CatList = session.query(Categories.id)
+        CatList = [r for (r,) in CatList]
+        cnter = 0
+        if (session.query(Lineage.child_id).\
+            filter(Lineage.parent_id.notin_(CatList)).\
+            count())==0:
+            print "No more orphans found in the Lineage table!"
+            break
+        query = session.query(Lineage.child_id).\
+            filter(Lineage.parent_id.notin_(CatList)).\
+            all()
+        query = [r for (r,) in query]
+        Lines = session.query(Lineage).\
+            filter(Lineage.parent_id.notin_(CatList)).\
+            all()
+        cnter = 0
+        print "---------------------------------------"
+        for row in query:
+            print "Lineage orphan #" + str(cnter+1)
+            print "Orphan Id: " + str(row)
+            cnter +=cnter
+        categoriestoDelete = session.query(Categories).\
+            filter(Categories.id.in_(query)).\
+            all()
+        cnter = session.query(Categories).\
+            filter(Categories.id.in_(query)).\
+            count()
+        print "---------------------------------------"
+        print "Number of orphan categories was #" + str(cnter)
+        print "Attempting delete now!"
+        cnter = 0
+        for row in categoriestoDelete:
+            print  categoriestoDelete[cnter].name + " was the name of the Category to be deleted"
+            session.delete(categoriestoDelete[cnter])
+            session.commit()
+            print "Category#" + str(cnter+1) + " has just been deleted!"
+            cnter += cnter
+        cnter = 0
+        for row in Lines:
+            session.delete(Lines[cnter])
+            session.commit()
+            print "Lineage Line# " + str(cnter+1) + " has just been deleted!"
+            cnter += cnter
+        current += 1
+    return True
+
+
+def addUser(login_session):
+    newUser = User(name=login_session['username'], email=login_session[
+                   'email'], picture=login_session['picture'])
+    session.add(newUser)
+    session.commit()
+    user = session.query(User).filter_by(email=login_session['email']).one()
+    return user.id
+
+
+def userObject(user_id):
+    user = session.query(User).filter_by(id=user_id).one()
+    return user
+
+
+def userID(email):
+    try:
+        user = session.query(User).filter_by(email=email).one()
+        return user.id
+    except:
+        return None
+
+
+
+@app.teardown_request
+def remove_session(ex=None):
+    session = DBSession()
+    print "There was a teardown request"
+    if 'access_token' in login_session:
+        del login_session['access_token']
+    if 'gplus_id' in login_session:
+        del login_session['gplus_id']
+    if 'username' in login_session:
+        print "Username will be deleted"
+        del login_session['username']
+        #print login_session['username']
+    if 'email' in login_session:
+        del login_session['email']
+    if 'picture' in login_session:
+        del login_session['picture']
+    DBSession.close()
+    DBSession.remove()
+    #DBSession.clear()    
 
 if(__name__ == '__main__'):
     app.secret_key = 'super_secret_key'

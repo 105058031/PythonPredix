@@ -31,6 +31,17 @@
           </span>
         </div>
 <div id="result" class="-font--sans"></div>
+<form action="{{ url_for('verification')}}" method = 'post'>
+
+
+	<p  class="-font--sans"><b>Username:</b></p>
+		<input type ='text' size='25' name='username'>
+	<p  class="-font--sans"><b>Password:</b></p>
+		<input type ='text' size='25' name='password'>
+
+<input class="ge-button -fill--solid" style="border-radius: 5% 5% 5% 5%" type='submit' value='Submit'>
+</form>
+
 </div>
 
 <script>
