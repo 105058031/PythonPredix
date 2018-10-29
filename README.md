@@ -31,8 +31,10 @@ the populateCatalog.py file fills the application database with some starter inf
 Meaning that the longest category tree has 3 child categories before the user is presented with the items withheld in any one child category
 
 The application utilizes Google API for logging in to the application.
-Without authentication it is possible to view all categories, subcategories and items contained within, 
-but it requires a signed in user to create new items and categories and to edit or delete existing ones.
+User authentication is necessary to view all categories, subcategories and items. 
+The user is allowed to create new items and categories and to edit or delete his/her existing ones but not content created by other users.
+In case the user adds subcategories or items to another users category tree the content might be destroyed 
+when the parent category is deleted as no orphan content is maintained in the application.
 When a new category is created it's possible to add either subcategories to it or items, but not both.
 If a category has been given a child category, any items will have to be added to the child category. 
 Similarly a category that contains items cannot receive a child category.

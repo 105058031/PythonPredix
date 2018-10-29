@@ -7,8 +7,9 @@
 </style>
 <nav>
   <h1>This Here Parts Catalogue</h1>
-    {% if LG == true %}
-<a href="{{url_for('gdisconnect')}}" > <button class="ge-button -log" style=" top: 60px;  border-radius: 8px 8px 8px 8px; margin 0px 0px 3vw 0px;"> Sign Out </button> </a>
+    {% if 'username' in session %}
+	<a href="{{ url_for('gdisconnect')}}" > <button class="ge-button -log" style="  top: 60px; border-radius: 8px 8px 8px 8px; margin 0px 0px 3vw 0px;"> Sign Out </button> </a>
+</form>
 {% else %}
 <a href="{{url_for('showLogin')}}" > <button class="ge-button -log" style="  top: 60px; border-radius: 8px 8px 8px 8px; margin 0px 0px 3vw 0px;"> Sign In </button> </a>
 {% endif %}

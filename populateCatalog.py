@@ -24,7 +24,8 @@ DBSession = sessionmaker(bind=engine)
 # session.rollback()
 session = DBSession()
 str64 = pwd_context.encrypt("admin")
-Us1 = User(id="1", username="admin",  password_hash=str64)
+Us1 = User(id="1", username="admin",  password_hash=str64, 
+           email="gabor.dubniczki@ge.com")
 session.add(Us1)
 session.commit()
 Cat1 = Categories(id="1",

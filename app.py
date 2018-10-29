@@ -1,4 +1,5 @@
 import httplib2
+import random
 import json
 import requests
 import random
@@ -73,13 +74,15 @@ def verification():
         if user.verify_password(Password):
             print "Secondary verification succeeded, password is matching!"
             login_session['username'] = Username
+            login_session['user_id'] = user.id
+            login_session['email'] = user.email
             return redirect(url_for('mainCategories', mcid=1))
         else:
             print "Verification failed: Incorrect Password"
-            return render_template('oauthLogin.html', bool=Bool, STATE=login_session['state'], LG=False)
+            return render_template('oauthLogin.html', bool=Bool, STATE=login_session['state'])
     else:
         print "Verification failed: No Such User!"
-        return render_template('oauthLogin.html', bool=Bool, STATE=login_session['state'], LG=False)
+        return render_template('oauthLogin.html', bool=Bool, STATE=login_session['state'])
     
     
 @app.route('/login')
@@ -87,11 +90,12 @@ def showLogin(Bool=False):
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
                     for x in xrange(32))
     login_session['state'] = state
-    return render_template('oauthLogin.html', bool=Bool, STATE=state, LG=False)
+    return render_template('oauthLogin.html', bool=Bool, STATE=state)
 
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
+    session = DBSession()
     # Validate state token
     if request.args.get('state') != login_session['state']:
         response = make_response(json.dumps('Invalid state parameter.'), 401)
@@ -113,11 +117,9 @@ def gconnect():
 
     # Check that the access token is valid.
     access_token = credentials.access_token
-    url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=')
-    url = url + str(access_token)
+    url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s'
+           % access_token)
     h = httplib2.Http()
-    res = h.request(url, 'GET')[1]
-    print res
     result = json.loads(h.request(url, 'GET')[1])
     # If there was an error in the access token info, abort.
     if result.get('error') is not None:
@@ -144,8 +146,7 @@ def gconnect():
     stored_access_token = login_session.get('access_token')
     stored_gplus_id = login_session.get('gplus_id')
     if stored_access_token is not None and gplus_id == stored_gplus_id:
-        response = make_response(json.dumps('''Current user is
-                                            already connected.'''),
+        response = make_response(json.dumps('Current user is already connected.'),
                                  200)
         response.headers['Content-Type'] = 'application/json'
         return response
@@ -165,53 +166,68 @@ def gconnect():
     login_session['picture'] = data['picture']
     login_session['email'] = data['email']
 
+    # See if a user exists, if it doesn't make a new one
+    user_id = userID(data["email"])
+    if not user_id:
+        print "User was not found, new user is being created"
+        user_id = addUser(login_session)
+    print "User was found, passing user_id"
+    print "The id to be passed: " + str(user_id)
+    login_session['user_id'] = user_id
+    
     output = ''
     output += '<h1>Welcome, '
     output += login_session['username']
     output += '!</h1>'
-    output += '<img src = "'
+    output += '<img src="'
     output += login_session['picture']
-    output += ''' " style = "width: 300px; height:
-    300px;border-radius: 150px;-webkit-border-radius: 150px;
-    -moz-border-radius: 150px;"> '''
+    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
     flash("you are now logged in as %s" % login_session['username'])
     print "done!"
-    return redirect(url_for('mainCategories', mcid=1))
+    return output
 
 
 @app.route('/gdisconnect')
 def gdisconnect():
+    session = DBSession()
+        # Check if user connected via Google APi
     access_token = login_session.get('access_token')
     if access_token is None:
-        print 'Access Token is None'
-        response = make_response(json.dumps('''Current user not
-                                            connected.'''), 401)
+        for r in login_session:
+            print "Login session content: " + r
+            print "Deleting login_session member!"
+            del r
+        app.secret_key = 'super_secret_key_' & random.randint(1,100)
+        login_session['username'] = ''
+        login_session.clear()
+        response = make_response(
+            json.dumps('User has been signed out.'), 200)
         response.headers['Content-Type'] = 'application/json'
+        response.set_cookie('', '', expires=0)
         return response
-    print 'In gdisconnect access token is %s', access_token
-    print 'User name is: '
-    print login_session['username']
-    url = 'https://accounts.google.com/o/oauth2/revoke?token = %s' % \
-        login_session['access_token']
+    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
+    
     h = httplib2.Http()
     result = h.request(url, 'GET')[0]
-    print 'result is '
-    print result
     if result['status'] == '200':
+        # Reset the user's session.
         del login_session['access_token']
         del login_session['gplus_id']
         del login_session['username']
         del login_session['email']
         del login_session['picture']
+
         response = make_response(json.dumps('Successfully disconnected.'), 200)
         response.headers['Content-Type'] = 'application/json'
+        response.set_cookie('', '', expires=0)
         return response
     else:
-        response = make_response(json.dumps('''Failed to revoke token for
-                                            given user.''', 400))
+        # For whatever reason, the given token was invalid.
+        response = make_response(
+            json.dumps('Failed to revoke token for given user.', 400))
         response.headers['Content-Type'] = 'application/json'
+        response.set_cookie('', '', expires=0)
         return response
-
 
 @app.route('/api/users', methods=['POST'])
 def new_user():
@@ -221,6 +237,7 @@ def new_user():
         return redirect('/login')
     username = request.json.get('username')
     password = request.json.get('password')
+    email = request.json.get('email')
     if username is None or password is None:
         abort(400)
 # missing arguments
@@ -294,9 +311,13 @@ def LineJSON(childid):
 def mainCategories(mcid='1'):
     session = DBSession()
     Bool = False
+    for r in login_session:
+        print "Login session member:" + str(r)
+        
     if 'username' not in login_session:
         return redirect('/login')
     else:
+        print "User is logged in"
         Bool = True
         print "Current username: " + login_session['username']
     Navs = [[1, "Main Categories"]]
@@ -312,7 +333,7 @@ def mainCategories(mcid='1'):
     return render_template("mCategories.html",
                            items=Cats_Disp,
                            navs=Navs,
-                           LG=Bool)
+                           )
 
 
 @app.route('/mcategory/<int:mcid>/s')
@@ -336,15 +357,17 @@ def subCategories(mcid):
     NavItems = navigationSnippet(mcid)
     return render_template("mCategories.html",
                            items=Cats_Disp,
-                           navs=NavItems,
-                           LG=Bool)
+                           navs=NavItems)
 
 
 @app.route('/mcategory/<int:mcid>/new', methods=['GET', 'POST'])
 def newmainCategory(mcid):
     session = DBSession()
     Bool = False
+    for r in login_session:
+        print "login session content: " + r
     if 'username' not in login_session:
+        print "No username was found in the login session"
         return redirect('/login')
     else:
         Bool = True
@@ -353,34 +376,38 @@ def newmainCategory(mcid):
         filter_by(parent_id=mcid).\
         all()
     Main_Cats = [r for r, in Main_Cats]
+    print "querying for category"
     Cats_Disp = session.query(Categories).\
         filter(Categories.id.in_((Main_Cats))).\
         all()
     NavItems = navigationSnippet(mcid)
     if request.method == 'POST':
-        Us1 = session.query(User).filter_by(username=login_session['username'] ).one()
-        newCategory = Categories(name=request.form['name'], user=Us1)
-        session.add(newCategory)
-        session.commit()
-        nId = session.query(Categories).\
-            with_entities(Categories.id).\
-            filter_by(name=request.form['name']).\
-            limit(1).\
-            one()
-        print nId[0]
-        newLineage = Lineage(parent_id=mcid, child_id=nId[0])
-        session.add(newLineage)
-        session.commit()
-
-        return redirect(url_for('decide', mcid=mcid))
+        if 'user_id' in login_session: 
+            newCategory = Categories(name=request.form['name'], user_id=login_session['user_id'])
+            session.add(newCategory)
+            session.commit()
+            nId = session.query(Categories).\
+                with_entities(Categories.id).\
+                filter_by(name=request.form['name']).\
+                limit(1).\
+                one()
+            print nId[0]
+            newLineage = Lineage(parent_id=mcid, child_id=nId[0])
+            session.add(newLineage)
+            session.commit()
+            return redirect(url_for('decide', mcid=mcid))
+        else:
+            print "No user id was found in the login_session"
+            for r in login_session:
+                print "login session content: " + r
+            return redirect('/login')
     else:
-        return render_template('newCategory.html', navs=NavItems, LG=Bool)
+        return render_template('newCategory.html', navs=NavItems )
 
 
 @app.route('/mcategory/<int:mcid>/edit', methods=['GET', 'POST'])
 def editmainCategory(mcid):
     session = DBSession()
-
     Bool = False
     if 'username' not in login_session:
         return redirect('/login')
@@ -391,35 +418,26 @@ def editmainCategory(mcid):
         filter_by(child_id=mcid).\
         first()
     pid = parentCatId[0]
-    if request.method == 'POST':
-        CatUsId = session.query(Categories).\
-        with_entities(Categories.user_id).\
-        filter_by(id=mcid).\
-        first()
-        Us1=session.query(User).\
-        filter_by(id=CatUsId[0]).\
-        first()
-        Us2=session.query(User).filter_by(username=login_session['username'] ).one()
-        if (Us1==Us2):
-            if request.form['name']:
-                session.query(Categories).\
-                    filter_by(id=mcid).\
-                    update({"name": request.form['name']})
-                session.commit()
-                return redirect(url_for('subCategories', mcid=pid))
-        else:
-            flash('You are not authorized to edit this Category')
-            NavItems = navigationSnippet(mcid)
-            return render_template("editCategory.html",
+    editedCat = session.query(Categories).\
+            filter_by(id=mcid).one()
+    if editedCat.user_id != login_session['user_id']:
+        flash('You are not authorized to edit this Category')
+        NavItems = navigationSnippet(mcid)
+        return render_template("editCategory.html",
                                mcid=mcid,
-                               navs=NavItems,
-                               LG=Bool)
+                               navs=NavItems)
+    if request.method == 'POST':
+        if request.form['name']:
+            session.query(Categories).\
+                filter_by(id=mcid).\
+                update({"name": request.form['name']})
+            session.commit()
+            return redirect(url_for('subCategories', mcid=pid))    
     else:
         NavItems = navigationSnippet(mcid)
         return render_template("editCategory.html",
                                mcid=mcid,
-                               navs=NavItems,
-                               LG=Bool)
+                               navs=NavItems)
 
 
 @app.route('/mcategory/<int:mcid>/delete', methods=['GET', 'POST'])
@@ -435,41 +453,31 @@ def deletemainCategory(mcid):
         filter_by(child_id=mcid).\
         first()
     pid = parentCatId[0]
+    editedCat = session.query(Categories).\
+        filter_by(id=mcid).one()
+    if editedCat.user_id != login_session['user_id']:
+        flash('You are not authorized to delete this Category')
+        NavItems = navigationSnippet(mcid)
+        return render_template("deleteCategory.html",
+                               mcid=mcid,
+                               navs=NavItems)
     print "This is the parentCatid: " + str(pid)
     if request.method == 'POST':
-        CatUsId = session.query(Categories).\
-        with_entities(Categories.user_id).\
-        filter_by(id=mcid).\
-        first()
-        Us1=session.query(User).\
-        filter_by(id=CatUsId[0]).\
-        first()
-        Us2=session.query(User).filter_by(username=login_session['username'] ).one()
-        if (Us1==Us2):
-            CategoriesDel = session.query(Categories).filter_by(id=mcid).one()
-            session.delete(CategoriesDel)
+        CategoriesDel = session.query(Categories).filter_by(id=mcid).one()
+        session.delete(CategoriesDel)
+        session.commit()
+        orphanCategoryDelete()
+        orphanItemDeleter()
+        LineageDel = session.query(Lineage).filter_by(child_id=mcid).all()
+        for r in LineageDel:
+            session.delete(r)
             session.commit()
-            orphanCategoryDelete()
-            orphanItemDeleter()
-            LineageDel = session.query(Lineage).filter_by(child_id=mcid).all()
-            for r in LineageDel:
-                session.delete(r)
-                session.commit()
-            return redirect(url_for('subCategories', mcid=pid))
-        else:
-            flash('You are not authorized to delete this Category')
-            NavItems = navigationSnippet(mcid)
-            return render_template("deleteCategory.html",
-                                   mcid=mcid,
-                                   navs=NavItems,
-                                   LG=Bool)
-            
+        return redirect(url_for('subCategories', mcid=pid))    
     else:
         NavItems = navigationSnippet(mcid)
         return render_template("deleteCategory.html",
                                mcid=mcid,
-                               navs=NavItems,
-                               LG=Bool)
+                               navs=NavItems)
 
 
 @app.route('/mcategory/<int:mcid>/items')
@@ -496,8 +504,7 @@ def mainItems(mcid):
     return render_template("mItems.html",
                            bool=Bool,
                            items=Main_Its,
-                           navs=NavItems,
-                           LG=Bool)
+                           navs=NavItems)
 
 
 @app.route('/mcategory/<int:mcid>/item/new', methods=['GET', 'POST'])
@@ -510,23 +517,24 @@ def newItem(mcid):
         Bool = True
     print "MCID: " + str(mcid)
     NavItems = navigationSnippet(mcid)
-
     if request.method == 'POST':
-        Us1 = session.query(User).filter_by(username=login_session['username']).one()
-        newItem = Items(name=request.form['name'],
-                        description=request.form['description'],
-                        price=request.form['price'],
-                        category_id=mcid,
-                        user = Us1)
-        print "Adding new item"
-        session.add(newItem)
-        session.commit()
-        return redirect(url_for('mainItems', mcid=mcid))
+        if 'user_id' in login_session: 
+            #Us1 = session.query(User).filter_by(username=login_session['username']).one()
+            newItem = Items(name=request.form['name'],
+                            description=request.form['description'],
+                            price=request.form['price'],
+                            category_id=mcid,
+                            user_id = login_session['user_id'])
+            print "Adding new item"
+            session.add(newItem)
+            session.commit()
+            return redirect(url_for('mainItems', mcid=mcid))
+        else:
+            return redirect('/login')
     else:
         return render_template('newItems.html',
                                mcid=mcid,
-                               navs=NavItems,
-                               LG=Bool)
+                               navs=NavItems)
 
 
 @app.route('/item/<int:itid>/edit', methods=['GET', 'POST'])
@@ -544,37 +552,23 @@ def editItem(itid):
     print parentCatId[0]
     mcid = parentCatId[0]
     NavItems = navigationSnippet(mcid)
+    editedItem = session.query(Items).\
+        filter_by(id=itid).one()
+    if editedItem.user_id != login_session['user_id']:
+        flash('You are not authorized to edit this Item')
+        NavItems = navigationSnippet(mcid)
+        return redirect(url_for('mainItems', mcid=mcid))
     if request.method == 'POST':
-        CatUsId = session.query(Items).\
-        with_entities(Items.user_id).\
-        filter_by(id=itid).\
-        first()
-        Us1=session.query(User).\
-        filter_by(id=CatUsId[0]).\
-        first()
-        Us2=session.query(User).filter_by(username=login_session['username'] ).one()
-        if (Us1==Us2):
-            editedItem = session.query(Items).filter_by(id=itid).one()
-            if request.form['name']:
-                editedItem.name = request.form['name']
-            if request.form['description']:
-                editedItem.description = request.form['description']
-            if request.form['price']:
-                editedItem.price = request.form['price']
-            session.add(editedItem)
-            session.commit()
-            return redirect(url_for('mainItems', mcid=mcid))
-        else:
-            flash('You are not authorized to edit this Item')
-            stmt = text("""SELECT i.id, i.name, i.description, i.price,
-                        l.parent_id as pid FROM items i OUTER LEFT JOIN
-                        lineage l ON i.category_id = l.child_id
-                        WHERE i.category_id = :x""")
-            stmt = stmt.bindparams(x=mcid)
-            editedItem = session.execute(stmt, {}).fetchall()
-            return render_template('editItems.html',
-                                   navs=NavItems,
-                                   item=editedItem[0], LG=Bool)
+        editedItem = session.query(Items).filter_by(id=itid).one()
+        if request.form['name']:
+            editedItem.name = request.form['name']
+        if request.form['description']:
+            editedItem.description = request.form['description']
+        if request.form['price']:
+            editedItem.price = request.form['price']
+        session.add(editedItem)
+        session.commit()
+        return redirect(url_for('mainItems', mcid=mcid))
     else:
         stmt = text("""SELECT i.id, i.name, i.description, i.price,
                     l.parent_id as pid FROM items i OUTER LEFT JOIN
@@ -584,7 +578,7 @@ def editItem(itid):
         editedItem = session.execute(stmt, {}).fetchall()
         return render_template('editItems.html',
                                navs=NavItems,
-                               item=editedItem[0], LG=Bool)
+                               item=editedItem[0])
 
 
 @app.route('/item/<int:itid>/delete', methods=['GET', 'POST'])
@@ -600,31 +594,21 @@ def deleteItem(itid):
         with_entities(Items.category_id). \
         filter_by(id=itid).one()
     mcid = parentCatId[0]
-    
+    editedItem = session.query(Items).\
+        filter_by(id=itid).one()
+    if editedItem.user_id != login_session['user_id']:
+        flash('You are not authorized to delete this Item')
+        NavItems = navigationSnippet(mcid)
+        return redirect(url_for('mainItems', mcid=mcid))    
     if request.method == 'POST':
-        CatUsId = session.query(Items).\
-        with_entities(Items.user_id).\
-        filter_by(id=itid).\
-        first()
-        Us1=session.query(User).\
-        filter_by(id=CatUsId[0]).\
-        first()
-        Us2=session.query(User).filter_by(username=login_session['username'] ).one()
-        if (Us1==Us2):
-            session.delete(itemToDelete)
-            session.commit()
-            return redirect(url_for('subCategories', mcid=mcid))
-        else:
-            flash('You are not authorized to delete this Item')
-            NavItems = navigationSnippet(mcid)
-            return render_template('deleteItems.html',
-                                   item=itemToDelete,
-                                   navs=NavItems, LG=Bool)
+        session.delete(itemToDelete)
+        session.commit()
+        return redirect(url_for('subCategories', mcid=mcid))
     else:
         NavItems = navigationSnippet(mcid)
         return render_template('deleteItems.html',
                                item=itemToDelete,
-                               navs=NavItems, LG=Bool)
+                               navs=NavItems)
 
 
 @app.route('/redirect/<int:mcid>')
@@ -754,8 +738,8 @@ def orphanCategoryDelete():
 
 
 def addUser(login_session):
-    newUser = User(name=login_session['username'], email=login_session[
-                   'email'], picture=login_session['picture'])
+    newUser = User(username=login_session['username'], 
+                   email=login_session['email'])
     session.add(newUser)
     session.commit()
     user = session.query(User).filter_by(email=login_session['email']).one()
@@ -776,7 +760,7 @@ def userID(email):
 
 
 
-@app.teardown_request
+#@app.teardown_request
 def remove_session(ex=None):
     session = DBSession()
     print "There was a teardown request"
